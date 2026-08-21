@@ -23,6 +23,8 @@ nexora-event-conference-template/
 - Newsletter interaction
 - Responsive 320px-to-desktop layout
 - CSS custom properties for rebranding
+- SEO-ready title, description and social sharing metadata
+- Keyboard-friendly navigation and accessible interactive controls
 
 ## Set the countdown
 Open `js/app.js` and edit:
@@ -54,13 +56,18 @@ Schedule tabs use matching `data-day` and `data-panel` values:
 Copy an existing session article to add more sessions. Change the time, category, title, description and room.
 
 ## Add speakers
-Add a `.speaker` button with a unique `data-speaker` value, then add the matching speaker object in `js/app.js`. The modal will populate automatically.
+Add a speaker button with a unique `data-speaker` value, then add the matching speaker object in `js/app.js`. The modal will populate automatically.
 
 ## Update tickets
-Edit the three `.tickets article` blocks in `index.html` to change prices, names and feature lists.
+Edit the three `.tickets article` blocks in `index.html` to change prices, names and feature lists. Replace the demo ticket links with your real checkout URLs before production use.
+
+## SEO and social sharing
+The template includes a descriptive `<title>`, meta description, canonical URL, Open Graph metadata and Twitter card metadata. If you deploy the template somewhere other than GitHub Pages, update the canonical and `og:url` values in `index.html` to the final public URL.
 
 ## Production notes
 The map is a visual placeholder. Replace it with a real map provider/embed. Speaker imagery is represented by lightweight CSS placeholders; use properly licensed photography for production. Event details, sponsor names, speaker bios and pricing are demo content and should be replaced.
 
+The ticket, directions and speaker-connect links are intentionally lightweight demo anchors. Connect them to your real checkout, map and profile destinations when customizing the template.
+
 ## Marketplace tips
-Show the countdown, schedule tabs, speaker modal and responsive mobile view in marketplace screenshots. Emphasize the zero-framework architecture and easy CSS-variable rebranding.
+Show the countdown, schedule tabs, speaker modal and responsive mobile view in marketplace screenshots. Emphasize the zero-framework architecture, accessible interactions and easy CSS-variable rebranding.
