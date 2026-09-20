@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded",()=>{countdown();tabs();speakers();
 function countdown(){
  const target=new Date("2027-10-14T09:00:00-05:00").getTime();
  const ids=["d","h","m","s"];
- let timer;
+ let timer=null;
  function tick(){
   const remaining=Math.max(0,target-Date.now());
   const totalSeconds=Math.floor(remaining/1000);
@@ -14,7 +14,7 @@ function countdown(){
   if(!remaining&&timer){clearInterval(timer);timer=null}
  }
  tick();
- timer=setInterval(tick,1000);
+ if(target>Date.now())timer=setInterval(tick,1000);
 }
 
 /* Each button's data-day matches a schedule panel's data-panel. */
@@ -135,9 +135,11 @@ function nav(){
   if(event.key==="Escape"){event.preventDefault();closeNav();return}
   if(event.key!=="Tab")return;
   const focusable=[menu,...links].filter(el=>el&&el.offsetParent!==null);
-  if(document.activeElement===menu&&event.shiftKey){event.preventDefault();links.at(-1)?.focus();return}
-  if(document.activeElement===links.at(-1)&&!event.shiftKey){event.preventDefault();menu.focus();return}
-  if(previousFocus&&!navigation.contains(document.activeElement)&&document.activeElement!==menu){links[0]?.focus()}
+  const first=links[0];
+  const last=links.at(-1);
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();return}
+  if(!event.shiftKey&&document.activeElement===last){event.preventDefault();menu.focus();return}
+  if(previousFocus&&!navigation.contains(document.activeElement)&&document.activeElement!==menu){first?.focus()}
  });
 
  window.addEventListener("resize",()=>{
