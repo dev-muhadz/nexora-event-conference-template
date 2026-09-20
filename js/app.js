@@ -5,20 +5,159 @@ document.addEventListener("DOMContentLoaded",()=>{countdown();tabs();speakers();
 function countdown(){
  const target=new Date("2027-10-14T09:00:00-05:00").getTime();
  const ids=["d","h","m","s"];
- function tick(){let x=Math.max(0,target-Date.now()),t=Math.floor(x/1000);
-  let v=[Math.floor(t/86400),Math.floor(t%86400/3600),Math.floor(t%3600/60),t%60];
-  ids.forEach((id,i)=>document.getElementById(id).textContent=String(v[i]).padStart(2,"0"));
-  if(!x) clearInterval(timer);
- } tick(); const timer=setInterval(tick,1000);
+ let timer;
+ function tick(){
+  const remaining=Math.max(0,target-Date.now());
+  const totalSeconds=Math.floor(remaining/1000);
+  const values=[Math.floor(totalSeconds/86400),Math.floor(totalSeconds%86400/3600),Math.floor(totalSeconds%3600/60),totalSeconds%60];
+  ids.forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=String(values[i]).padStart(2,"0")});
+  if(!remaining&&timer){clearInterval(timer);timer=null}
+ }
+ tick();
+ timer=setInterval(tick,1000);
 }
+
 /* Each button's data-day matches a schedule panel's data-panel. */
-function tabs(){const b=document.querySelectorAll(".tabs button"),p=document.querySelectorAll(".schedule");b.forEach(x=>x.onclick=()=>{b.forEach(y=>{y.classList.remove("active");y.setAttribute("aria-selected","false")});p.forEach(y=>y.classList.remove("active"));x.classList.add("active");x.setAttribute("aria-selected","true");document.querySelector(`[data-panel="${x.dataset.day}"]`).classList.add("active")})}
+function tabs(){
+ const buttons=document.querySelectorAll(".tabs button");
+ const panels=document.querySelectorAll(".schedule");
+ buttons.forEach(button=>button.addEventListener("click",()=>{
+  buttons.forEach(item=>{item.classList.remove("active");item.setAttribute("aria-selected","false");item.setAttribute("tabindex","-1")});
+  panels.forEach(panel=>{panel.classList.remove("active");panel.setAttribute("hidden","")});
+  button.classList.add("active");
+  button.setAttribute("aria-selected","true");
+  button.setAttribute("tabindex","0");
+  const panel=document.querySelector(`[data-panel="${button.dataset.day}"]`);
+  if(panel){panel.classList.add("active");panel.removeAttribute("hidden");button.setAttribute("aria-controls",panel.id)}
+ }));
+ buttons.forEach((button,index)=>button.addEventListener("keydown",event=>{
+  if(!["ArrowRight","ArrowLeft","Home","End"].includes(event.key))return;
+  event.preventDefault();
+  let next=index;
+  if(event.key==="ArrowRight")next=(index+1)%buttons.length;
+  if(event.key==="ArrowLeft")next=(index-1+buttons.length)%buttons.length;
+  if(event.key==="Home")next=0;
+  if(event.key==="End")next=buttons.length-1;
+  buttons[next].focus();
+  buttons[next].click();
+ }));
+}
+
 /* Speaker data is kept here so cards stay lightweight and reusable. */
 function speakers(){
- const data={maya:["Maya Chen","Founder, Northstar AI","Maya builds practical AI systems for teams turning emerging technology into useful products."],james:["James Okoro","Design Director, Vertex","James leads product teams focused on making complex technology feel simple."],rhea:["Rhea Nair","Creator & Researcher","Rhea explores how technology changes culture, creativity and the way people learn."],tomas:["Tomás Silva","Founder, FWD_ Labs","Tomás works on tools that give small teams the leverage of much larger organizations."],lena:["Lena Moreau","CEO, Common Ground","Lena turns ambitious missions into durable companies, with a focus on leadership and sustainable growth."],niko:["Niko Vale","Artist & Technologist","Niko creates interactive installations exploring the boundary between physical and digital systems."]};
- const modal=document.getElementById("modal"),close=document.getElementById("close");
- document.querySelectorAll(".speakers button").forEach(c=>c.onclick=()=>{let d=data[c.dataset.speaker];document.getElementById("name").textContent=d[0];document.getElementById("role").textContent=d[1];document.getElementById("bio").textContent=d[2];modal.classList.add("open");close.focus()});
- close.onclick=()=>modal.classList.remove("open");modal.onclick=e=>{if(e.target===modal)modal.classList.remove("open")};document.onkeydown=e=>{if(e.key==="Escape")modal.classList.remove("open")}
+ const data={
+  maya:["Maya Chen","Founder, Northstar AI","Maya builds practical AI systems for teams turning emerging technology into useful products."],
+  james:["James Okoro","Design Director, Vertex","James leads product teams focused on making complex technology feel simple."],
+  rhea:["Rhea Nair","Creator & Researcher","Rhea explores how technology changes culture, creativity and the way people learn."],
+  tomas:["Tomás Silva","Founder, FWD_ Labs","Tomás works on tools that give small teams the leverage of much larger organizations."],
+  lena:["Lena Moreau","CEO, Common Ground","Lena turns ambitious missions into durable companies, with a focus on leadership and sustainable growth."],
+  niko:["Niko Vale","Artist & Technologist","Niko creates interactive installations exploring the boundary between physical and digital systems."]
+ };
+ const modal=document.getElementById("modal");
+ const dialog=modal?.querySelector(".dialog");
+ const close=document.getElementById("close");
+ if(!modal||!dialog||!close)return;
+ let opener=null;
+
+ function closeModal(){
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden","true");
+  document.body.classList.remove("modal-open");
+  if(opener){opener.focus();opener=null}
+ }
+
+ document.querySelectorAll(".speakers button").forEach(card=>card.addEventListener("click",()=>{
+  const d=data[card.dataset.speaker];
+  if(!d)return;
+  opener=card;
+  document.getElementById("name").textContent=d[0];
+  document.getElementById("role").textContent=d[1];
+  document.getElementById("bio").textContent=d[2];
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+  document.body.classList.add("modal-open");
+  close.focus();
+ }));
+
+ close.addEventListener("click",closeModal);
+ modal.addEventListener("click",event=>{if(event.target===modal)closeModal()});
+ modal.addEventListener("keydown",event=>{
+  if(event.key==="Escape"){event.preventDefault();closeModal();return}
+  if(event.key!=="Tab")return;
+  const focusable=dialog.querySelectorAll("a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex='-1'])");
+  if(!focusable.length)return;
+  const first=focusable[0];
+  const last=focusable[focusable.length-1];
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+ });
 }
-function nav(){let m=document.getElementById("menu"),n=document.getElementById("nav");m.onclick=()=>{let o=n.classList.toggle("open");m.textContent=o?"×":"☰";m.setAttribute("aria-expanded",o);m.setAttribute("aria-label",o?"Close navigation":"Open navigation")};n.querySelectorAll("a").forEach(a=>a.onclick=()=>{n.classList.remove("open");m.textContent="☰";m.setAttribute("aria-expanded","false");m.setAttribute("aria-label","Open navigation")})}
-function newsletter(){let f=document.querySelector("footer form");f.onsubmit=e=>{e.preventDefault();let i=f.querySelector("input"),b=f.querySelector("button");if(!i.checkValidity())return i.reportValidity();i.value="You're on the list!";i.disabled=true;b.textContent="✓";b.disabled=true}}
+
+/* Mobile navigation includes Escape/outside-click dismissal, focus management and scroll locking. */
+function nav(){
+ const menu=document.getElementById("menu");
+ const navigation=document.getElementById("nav");
+ if(!menu||!navigation)return;
+ const links=[...navigation.querySelectorAll("a")];
+ let previousFocus=null;
+
+ function closeNav({restoreFocus=true}={}){
+  const wasOpen=navigation.classList.contains("open");
+  navigation.classList.remove("open");
+  document.body.classList.remove("nav-open");
+  menu.textContent="☰";
+  menu.setAttribute("aria-expanded","false");
+  menu.setAttribute("aria-label","Open navigation");
+  if(restoreFocus&&wasOpen)menu.focus();
+ }
+
+ function openNav(){
+  previousFocus=document.activeElement;
+  navigation.classList.add("open");
+  document.body.classList.add("nav-open");
+  menu.textContent="×";
+  menu.setAttribute("aria-expanded","true");
+  menu.setAttribute("aria-label","Close navigation");
+  links[0]?.focus();
+ }
+
+ menu.addEventListener("click",()=>navigation.classList.contains("open")?closeNav():openNav());
+ links.forEach(link=>link.addEventListener("click",()=>closeNav({restoreFocus:false})));
+
+ document.addEventListener("click",event=>{
+  if(!navigation.classList.contains("open"))return;
+  if(navigation.contains(event.target)||menu.contains(event.target))return;
+  closeNav();
+ });
+
+ document.addEventListener("keydown",event=>{
+  if(!navigation.classList.contains("open"))return;
+  if(event.key==="Escape"){event.preventDefault();closeNav();return}
+  if(event.key!=="Tab")return;
+  const focusable=[menu,...links].filter(el=>el&&el.offsetParent!==null);
+  if(document.activeElement===menu&&event.shiftKey){event.preventDefault();links.at(-1)?.focus();return}
+  if(document.activeElement===links.at(-1)&&!event.shiftKey){event.preventDefault();menu.focus();return}
+  if(previousFocus&&!navigation.contains(document.activeElement)&&document.activeElement!==menu){links[0]?.focus()}
+ });
+
+ window.addEventListener("resize",()=>{
+  if(window.innerWidth>650)closeNav({restoreFocus:false});
+ });
+}
+
+/* Demo-only newsletter behavior. */
+function newsletter(){
+ const form=document.querySelector("footer form");
+ if(!form)return;
+ form.addEventListener("submit",event=>{
+  event.preventDefault();
+  const input=form.querySelector("input");
+  const button=form.querySelector("button");
+  if(!input.checkValidity()){input.reportValidity();return}
+  input.value="You're on the list!";
+  input.disabled=true;
+  button.textContent="✓";
+  button.disabled=true;
+  form.setAttribute("aria-label","Subscription confirmed");
+ });
+}
